@@ -1,5 +1,11 @@
 <script>
   import { createEventDispatcher } from 'svelte';
+  import {
+    FONT_PRESETS,
+    DEFAULT_FONT_FAMILY,
+    DEFAULT_FONT_SIZE_REM,
+    DEFAULT_FONT_BOLD
+  } from '../rsvp-utils.js';
 
   export let wordsPerMinute = 300;
   export let fadeEnabled = true;
@@ -10,6 +16,9 @@
   export let pauseDuration = 500;
   export let frameWordCount = 1;
   export let wordLengthWPMMultiplier = 5;
+  export let fontFamily = DEFAULT_FONT_FAMILY;
+  export let fontSizeRem = DEFAULT_FONT_SIZE_REM;
+  export let fontBold = DEFAULT_FONT_BOLD;
 
   const dispatch = createEventDispatcher();
 
@@ -91,6 +100,54 @@
       </div>
       <input type="range" min="1" max="7" step="2" bind:value={frameWordCount} class="slider">
       <p class="hint-text">Odd numbers (1, 3, 5, 7) center the highlight best</p>
+    </div>
+
+    <div class="control-row">
+      <div class="control-header">
+        <span>Font family</span>
+      </div>
+      <div class="font-presets">
+        {#each FONT_PRESETS as preset}
+          <button
+            type="button"
+            class="preset-btn"
+            class:active={fontFamily === preset.stack}
+            style="font-family: {preset.stack};"
+            on:click={() => fontFamily = preset.stack}
+          >
+            {preset.label}
+          </button>
+        {/each}
+      </div>
+    </div>
+
+    <div class="control-row">
+      <div class="control-header">
+        <span>Font size</span>
+        <span class="control-value">{Number(fontSizeRem).toFixed(1)}rem</span>
+      </div>
+      <input type="range" min="1.5" max="6" step="0.25" bind:value={fontSizeRem} class="slider">
+    </div>
+
+    <div class="toggle-row">
+      <span class="toggle-label">Bold</span>
+      <button
+        class="toggle"
+        class:active={fontBold}
+        on:click={() => fontBold = !fontBold}
+        role="switch"
+        aria-checked={fontBold}
+        aria-label="Toggle bold word text"
+      >
+        <span class="toggle-thumb"></span>
+      </button>
+    </div>
+
+    <div
+      class="font-preview"
+      style="font-family: {fontFamily}; font-size: {Math.min(fontSizeRem, 2.5)}rem; font-weight: {fontBold ? 700 : 500};"
+    >
+      <span>Rea</span><span class="preview-orp">d</span><span>ing</span>
     </div>
   </section>
 
@@ -470,6 +527,33 @@
     color: #666;
     font-size: 0.8rem;
     line-height: 1.3;
+  }
+
+  .font-presets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .font-presets .preset-btn {
+    flex: 1 1 auto;
+    min-width: 5.5rem;
+  }
+
+  .font-preview {
+    margin-top: 0.5rem;
+    background: #111;
+    border-radius: 12px;
+    padding: 1.25rem 1rem;
+    text-align: center;
+    color: #fff;
+    line-height: 1;
+    overflow: hidden;
+  }
+
+  .preview-orp {
+    color: #ff4444;
+    font-weight: 700;
   }
   /* Mobile */
   @media (max-width: 600px) {

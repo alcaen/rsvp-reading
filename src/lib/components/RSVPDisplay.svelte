@@ -1,5 +1,6 @@
 <script>
-  import { getActualORPIndex } from '../rsvp-utils.js';
+  import { onMount, tick } from 'svelte';
+  import { getActualORPIndex, computeFitScale, DEFAULT_FONT_FAMILY, DEFAULT_FONT_SIZE_REM } from '../rsvp-utils.js';
 
   export let word = '';
   export let wordGroup = [];
@@ -8,6 +9,9 @@
   export let fadeDuration = 150;
   export let fadeEnabled = true;
   export let multiWordEnabled = false;
+  export let fontFamily = DEFAULT_FONT_FAMILY;
+  export let fontSizeRem = DEFAULT_FONT_SIZE_REM;
+  export let fontBold = false;
 
   $: useMultiMode = multiWordEnabled && wordGroup.length > 0;
 
@@ -26,21 +30,82 @@
 
   // FIX: Detect Hebrew, Arabic, and other RTL scripts
   $: isRtl = /[\u0591-\u07FF\uFB1D-\uFDFD\uFE70-\uFEFC]/.test(currentWord);
+
+  $: baseFontSize = useMultiMode ? fontSizeRem * 0.5 : fontSizeRem;
+  $: wordWeight = fontBold ? 700 : 500;
+
+  let displayEl;
+  let beforeMeasureEl;
+  let orpMeasureEl;
+  let afterMeasureEl;
+  let fitScale = 1;
+  $: displaySize = baseFontSize * fitScale;
+
+  async function updateFit() {
+    await tick();
+    if (!displayEl) return;
+    fitScale = computeFitScale(
+      beforeMeasureEl?.offsetWidth ?? 0,
+      orpMeasureEl?.offsetWidth ?? 0,
+      afterMeasureEl?.offsetWidth ?? 0,
+      displayEl.clientWidth
+    );
+  }
+
+  $: currentWord, fontFamily, baseFontSize, wordWeight, useMultiMode, isRtl, updateFit();
+
+  onMount(() => {
+    const observer = new ResizeObserver(() => { updateFit(); });
+    if (displayEl) observer.observe(displayEl);
+    updateFit();
+    return () => observer.disconnect();
+  });
 </script>
 
-<div class="rsvp-display">
+<div class="rsvp-display" bind:this={displayEl}>
   <div class="focus-marker">
     <div class="marker-line top"></div>
     <div class="marker-line bottom"></div>
   </div>
 
+  {#if currentWord}
+    <div
+      class="measure"
+      aria-hidden="true"
+      style="font-family: {fontFamily}; font-size: {baseFontSize}rem; font-weight: {wordWeight};"
+    >
+      <span bind:this={beforeMeasureEl}>
+        {#if isRtl}
+          {wordSuffix}{#if useMultiMode && wordsAfter.length > 0} {wordsAfter.join(' ')}{/if}
+        {:else}
+          {#if useMultiMode && wordsBefore.length > 0}{wordsBefore.join(' ')} {/if}{wordPrefix}
+        {/if}
+      </span>
+      <span bind:this={orpMeasureEl}>{focusChar}</span>
+      <span bind:this={afterMeasureEl}>
+        {#if isRtl}
+          {#if useMultiMode && wordsBefore.length > 0}{wordsBefore.join(' ')} {/if}{wordPrefix}
+        {:else}
+          {wordSuffix}{#if useMultiMode && wordsAfter.length > 0} {wordsAfter.join(' ')}{/if}
+        {/if}
+      </span>
+    </div>
+  {/if}
+
   <div
     class="word-container"
     class:multi-mode={useMultiMode}
-    style="opacity: {opacity}; transition: opacity {fadeEnabled ? fadeDuration : 0}ms ease-in-out;"
+    class:bold={fontBold}
+    style="
+      opacity: {opacity};
+      transition: opacity {fadeEnabled ? fadeDuration : 0}ms ease-in-out;
+      font-family: {fontFamily};
+      font-size: {displaySize}rem;
+      font-weight: {wordWeight};
+    "
   >
     {#if currentWord}
-      <!-- ORP letter always centered at 50% -->
+      <!-- ORP letter always in the center column -->
       <span class="orp">{focusChar}</span>
 
       <!-- Content before ORP: prefix of current word + words before -->
@@ -79,7 +144,7 @@
     position: relative;
     width: 100%;
     height: 100%;
-    min-height: 300px;
+    min-height: 0;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -114,26 +179,27 @@
     background: linear-gradient(to top, #ff4444, transparent);
   }
 
+  .measure {
+    position: absolute;
+    visibility: hidden;
+    pointer-events: none;
+    white-space: nowrap;
+    left: 0;
+    top: 0;
+    line-height: 1;
+  }
+
   .word-container {
     position: relative;
-    font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', 'Source Code Pro', 'Menlo', 'Consolas', monospace;
-    font-size: clamp(3rem, 8vw, 6rem);
-    font-weight: 500;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: center;
+    width: 100%;
     line-height: 1;
     white-space: nowrap;
     text-rendering: geometricPrecision;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    /* Container needs width for absolute children to position against */
-    width: 100%;
-    height: 1.2em;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .word-container.multi-mode {
-    font-size: clamp(1.2rem, 4vw, 3rem);
   }
 
   .context-words {
@@ -142,32 +208,40 @@
   }
 
   .orp {
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
+    grid-column: 2;
+    grid-row: 1;
     color: #ff4444;
     font-weight: 700;
     text-shadow: 0 0 30px rgba(255, 68, 68, 0.6);
     z-index: 2;
+    justify-self: center;
+  }
+
+  .word-container.bold .orp {
+    font-weight: 800;
   }
 
   .before-orp {
-    position: absolute;
-    left: 50%;
-    transform: translateX(calc(-100% - 0.5ch));
+    grid-column: 1;
+    grid-row: 1;
+    justify-self: end;
     color: #fff;
-    /* direction: ltr; -- REMOVED to support dynamic RTL/LTR via inline style */
-    text-align: right; /* Keeps text growing towards the center */
+    text-align: right;
+    min-width: 0;
   }
 
   .after-orp {
-    position: absolute;
-    left: calc(50% + 0.5ch);
+    grid-column: 3;
+    grid-row: 1;
+    justify-self: start;
     color: #fff;
     text-align: left;
+    min-width: 0;
   }
 
   .placeholder {
+    grid-column: 1 / -1;
+    justify-self: center;
     color: #333;
     font-size: 2rem;
     font-weight: 300;
@@ -176,22 +250,14 @@
   }
 
   @media (max-width: 600px) {
-    .rsvp-display {
-      min-height: 200px;
-    }
-
     .marker-line {
       height: 30px;
     }
-
-    .word-container.multi-mode {
-      font-size: clamp(0.9rem, 3.5vw, 2rem);
-    }
   }
 
-  @media (max-width: 400px) {
-    .word-container.multi-mode {
-      font-size: clamp(0.75rem, 3vw, 1.5rem);
+  @media (max-height: 500px) {
+    .marker-line {
+      height: 20px;
     }
   }
 </style>

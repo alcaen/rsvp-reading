@@ -174,3 +174,69 @@ export function extractWordFrame(allWords, centerIdx, frameSize) {
 
   return { subset, centerOffset };
 }
+
+/**
+ * Curated RSVP font stacks. Monospace keeps ORP alignment most stable.
+ */
+export const FONT_PRESETS = [
+  {
+    id: 'mono',
+    label: 'Monospace',
+    stack: "'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', 'Source Code Pro', 'Menlo', 'Consolas', monospace"
+  },
+  {
+    id: 'sans',
+    label: 'Sans',
+    stack: "system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
+  },
+  {
+    id: 'serif',
+    label: 'Serif',
+    stack: "Georgia, 'Times New Roman', Times, serif"
+  },
+  {
+    id: 'georgia',
+    label: 'Georgia',
+    stack: 'Georgia, serif'
+  },
+  {
+    id: 'palatino',
+    label: 'Palatino',
+    stack: "Palatino, 'Palatino Linotype', 'Book Antiqua', 'URW Palladio L', serif"
+  }
+];
+
+export const DEFAULT_FONT_FAMILY = FONT_PRESETS[0].stack;
+export const DEFAULT_FONT_SIZE_REM = 4;
+export const DEFAULT_FONT_BOLD = false;
+
+/**
+ * Scale an ORP-centered word so neither side clips the display.
+ * The red letter stays at the screen center, so the longer side
+ * (before or after the ORP) determines the scale.
+ *
+ * @param {number} beforeWidth - Width of text to the left of the ORP letter
+ * @param {number} orpWidth - Width of the ORP letter
+ * @param {number} afterWidth - Width of text to the right of the ORP letter
+ * @param {number} containerWidth - Available display width
+ * @param {number} [paddingRatio=0.08] - Horizontal inset reserved as padding
+ * @param {number} [minScale=0.08] - Lowest allowed scale so extreme words still fit
+ * @returns {number} Scale factor between minScale and 1
+ */
+export function computeFitScale(
+  beforeWidth,
+  orpWidth,
+  afterWidth,
+  containerWidth,
+  paddingRatio = 0.08,
+  minScale = 0.08
+) {
+  if (!containerWidth || containerWidth <= 0) return 1;
+  const left = Math.max(0, beforeWidth || 0) + Math.max(0, orpWidth || 0) / 2;
+  const right = Math.max(0, afterWidth || 0) + Math.max(0, orpWidth || 0) / 2;
+  const neededHalf = Math.max(left, right);
+  if (neededHalf <= 0) return 1;
+  const availableHalf = (containerWidth * (1 - paddingRatio)) / 2;
+  if (neededHalf <= availableHalf) return 1;
+  return Math.max(minScale, availableHalf / neededHalf);
+}

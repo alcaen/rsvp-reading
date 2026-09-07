@@ -4,7 +4,10 @@
     parseText as parseTextUtil,
     getWordDelay as getWordDelayUtil,
     formatTimeRemaining,
-    shouldPauseAtWord
+    shouldPauseAtWord,
+    DEFAULT_FONT_FAMILY,
+    DEFAULT_FONT_SIZE_REM,
+    DEFAULT_FONT_BOLD
   } from './lib/rsvp-utils.js';
   import { parseFile } from './lib/file-parsers.js';
   import {
@@ -47,6 +50,9 @@
   let pauseOnPunctuation = true;
   let punctuationPauseMultiplier = 2;
   let wordLengthWPMMultiplier = 5;
+  let fontFamily = DEFAULT_FONT_FAMILY;
+  let fontSizeRem = DEFAULT_FONT_SIZE_REM;
+  let fontBold = DEFAULT_FONT_BOLD;
 
   // Animation
   let wordOpacity = 1;
@@ -192,7 +198,10 @@
         wordLengthWPMMultiplier,
         pauseAfterWords,
         pauseDuration,
-        frameWordCount
+        frameWordCount,
+        fontFamily,
+        fontSizeRem,
+        fontBold
       }
     });
   }
@@ -216,6 +225,9 @@
       pauseAfterWords = session.settings.pauseAfterWords ?? pauseAfterWords;
       pauseDuration = session.settings.pauseDuration ?? pauseDuration;
       frameWordCount = session.settings.frameWordCount ?? frameWordCount;
+      fontFamily = session.settings.fontFamily ?? fontFamily;
+      fontSizeRem = session.settings.fontSizeRem ?? fontSizeRem;
+      fontBold = session.settings.fontBold ?? fontBold;
     }
 
     showSavedSessionPrompt = false;
@@ -425,6 +437,9 @@
         bind:pauseAfterWords
         bind:pauseDuration
         bind:frameWordCount
+        bind:fontFamily
+        bind:fontSizeRem
+        bind:fontBold
         on:close={() => showSettings = false}
       />
     </div>
@@ -482,6 +497,9 @@
       {fadeDuration}
       {fadeEnabled}
       multiWordEnabled={frameWordCount > 1}
+      {fontFamily}
+      {fontSizeRem}
+      {fontBold}
     />
   </div>
 
@@ -552,21 +570,21 @@
   }
 
   main {
-    height: 100vh;
-    height: 100dvh; /* Dynamic viewport height for mobile */
+    width: 100%;
+    height: 100%;
     display: flex;
     flex-direction: column;
     background-color: #000;
     color: #fff;
     font-family: 'Segoe UI', system-ui, sans-serif;
-    padding: 2rem;
+    padding: max(2rem, env(safe-area-inset-top)) max(2rem, env(safe-area-inset-right)) max(2rem, env(safe-area-inset-bottom)) max(2rem, env(safe-area-inset-left));
     box-sizing: border-box;
     transition: padding 0.3s ease;
     overflow: hidden;
   }
 
   main.focus-mode {
-    padding: 1rem;
+    padding: max(1rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right)) max(1rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left));
   }
 
   header {
@@ -729,11 +747,11 @@
   /* Mobile styles */
   @media (max-width: 600px) {
     main {
-      padding: 1rem;
+      padding: max(1rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right)) max(1rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left));
     }
 
     main.focus-mode {
-      padding: 0.5rem;
+      padding: max(0.5rem, env(safe-area-inset-top)) max(0.5rem, env(safe-area-inset-right)) max(0.5rem, env(safe-area-inset-bottom)) max(0.5rem, env(safe-area-inset-left));
     }
 
     .panel-overlay {
@@ -746,6 +764,33 @@
 
     .mobile-only {
       display: flex;
+    }
+  }
+
+  @media (max-height: 500px) {
+    .desktop-only {
+      display: none;
+    }
+
+    .mobile-only {
+      display: flex;
+    }
+
+    main {
+      padding: max(0.5rem, env(safe-area-inset-top)) max(0.75rem, env(safe-area-inset-right)) max(0.5rem, env(safe-area-inset-bottom)) max(0.75rem, env(safe-area-inset-left));
+    }
+
+    main.focus-mode {
+      padding: max(0.25rem, env(safe-area-inset-top)) max(0.5rem, env(safe-area-inset-right)) max(0.25rem, env(safe-area-inset-bottom)) max(0.5rem, env(safe-area-inset-left));
+    }
+
+    header {
+      margin-bottom: 0.25rem;
+    }
+
+    .bottom-bar {
+      gap: 0.5rem;
+      padding-top: 0.25rem;
     }
   }
 

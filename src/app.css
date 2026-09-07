@@ -17,21 +17,16 @@
   box-sizing: border-box;
 }
 
+html, body, #app {
+  width: var(--app-width, 100dvw);
+  height: var(--app-height, 100dvh);
+  background-color: #000;
+  overflow: hidden;
+}
+
 body {
   margin: 0;
   padding: 0;
-  min-width: 320px;
-  height: 100vh;
-  height: 100dvh;
-  background-color: #000;
-  overflow: hidden;
   position: fixed;
-  width: 100%;
-}
-
-#app {
-  width: 100%;
-  height: 100%;
-  background-color: #000;
-  overflow: hidden;
+  inset: 0;
 }

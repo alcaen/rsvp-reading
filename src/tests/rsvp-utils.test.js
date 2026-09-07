@@ -7,7 +7,8 @@ import {
   formatTimeRemaining,
   splitWordForDisplay,
   shouldPauseAtWord,
-  extractWordFrame
+  extractWordFrame,
+  computeFitScale
 } from '../lib/rsvp-utils.js'
 
 describe('parseText', () => {
@@ -391,5 +392,25 @@ describe('extractWordFrame', () => {
     const result = extractWordFrame(words, 9, 5)
     expect(result.subset).toEqual(['eight', 'nine', 'ten'])
     expect(result.centerOffset).toBe(2)
+  })
+})
+
+describe('computeFitScale', () => {
+  it('should return 1 when both sides already fit', () => {
+    expect(computeFitScale(40, 20, 40, 400)).toBe(1)
+  })
+
+  it('should shrink based on the longer side of an ORP-centered word', () => {
+    // Left half = 40 + 10, right half = 200 + 10; available half = 200 * 0.9 / 2 = 90
+    expect(computeFitScale(40, 20, 200, 200, 0.1)).toBeCloseTo(90 / 210)
+  })
+
+  it('should not shrink below the minimum scale', () => {
+    expect(computeFitScale(0, 10, 10000, 100, 0.08, 0.08)).toBe(0.08)
+  })
+
+  it('should return 1 for invalid measurements', () => {
+    expect(computeFitScale(0, 0, 0, 200)).toBe(1)
+    expect(computeFitScale(40, 20, 40, 0)).toBe(1)
   })
 })
