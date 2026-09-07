@@ -63,7 +63,7 @@
   $: currentWord = words[currentWordIndex - 1] || (words.length > 0 ? words[0] : '');
   $: wordFrame = extractWordFrame(words, Math.max(0, currentWordIndex - 1), frameWordCount);
   $: timeRemaining = formatTimeRemaining(words.length - currentWordIndex, wordsPerMinute);
-  $: isFocusMode = isPlaying || isPaused;
+  $: isFocusMode = isPlaying;
 
   function parseText() {
     words = parseTextUtil(text);
@@ -117,6 +117,7 @@
     isPaused = false;
     showSettings = false;
     showTextInput = false;
+    showJumpTo = false;
     showNextWord();
   }
 
@@ -133,6 +134,9 @@
     if (currentWordIndex < words.length) {
       isPlaying = true;
       isPaused = false;
+      showSettings = false;
+      showTextInput = false;
+      showJumpTo = false;
       scheduleNextWord();
     }
   }

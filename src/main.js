@@ -2,20 +2,18 @@ import { mount } from 'svelte'
 import './app.css'
 import App from './App.svelte'
 
-function syncViewportSize() {
-  const viewport = window.visualViewport
-  const width = Math.round(viewport?.width ?? window.innerWidth)
-  const height = Math.round(viewport?.height ?? window.innerHeight)
-  const root = document.documentElement
-  root.style.setProperty('--app-width', `${width}px`)
-  root.style.setProperty('--app-height', `${height}px`)
+function refreshLayout() {
+  window.scrollTo(0, 0)
+  window.dispatchEvent(new Event('resize'))
 }
 
-syncViewportSize()
-window.addEventListener('resize', syncViewportSize)
-window.addEventListener('orientationchange', syncViewportSize)
-window.visualViewport?.addEventListener('resize', syncViewportSize)
-window.visualViewport?.addEventListener('scroll', syncViewportSize)
+window.addEventListener('orientationchange', () => {
+  refreshLayout()
+  // iOS reports the old viewport first; refresh again after it settles.
+  setTimeout(refreshLayout, 150)
+  setTimeout(refreshLayout, 400)
+})
+window.addEventListener('resize', () => window.scrollTo(0, 0))
 
 const app = mount(App, {
   target: document.getElementById('app'),
