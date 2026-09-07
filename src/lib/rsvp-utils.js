@@ -14,22 +14,25 @@ export function parseText(text) {
 
 /**
  * Calculate the Optimal Recognition Point (ORP) index for a word.
- * The ORP is the character position where the eye naturally focuses when reading.
- * Based on word length, this determines which letter should be highlighted.
- * Supports all Unicode letters (Latin, Cyrillic, CJK, Arabic, etc.)
+ * ORP is slightly left of the word's geometric center — that is the
+ * letter the eye should lock onto. The display then pins this letter
+ * to a fixed screen location so the eye does not saccade.
+ *
+ * Letter positions follow Spritz TABLE I (US 20140016867 A1):
+ * 1 letter → 1st, 2–5 → 2nd, 6–9 → 3rd, 10–13 → 4th, 14+ → 5th.
+ * Counts Unicode letters only (Latin, Cyrillic, CJK, Arabic, etc.).
  *
  * @param {string} word - The word to calculate ORP for
- * @returns {number} The index of the letter that should be highlighted
+ * @returns {number} The 0-based index among letters that should be highlighted
  */
 export function getORPIndex(word) {
   if (!word || typeof word !== "string") return 0;
   const len = word.replace(/[^\p{L}]/gu, "").length;
   if (len <= 1) return 0;
-  if (len <= 3) return 0;
   if (len <= 5) return 1;
   if (len <= 9) return 2;
-  if (len <= 12) return 3;
-  return Math.floor(Math.log2(len - 1)) + 1;
+  if (len <= 13) return 3;
+  return 4;
 }
 
 /**

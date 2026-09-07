@@ -53,13 +53,10 @@ describe('getORPIndex', () => {
     expect(getORPIndex('I')).toBe(0)
   })
 
-  it('should return 0 for 2-3 letter words', () => {
-    expect(getORPIndex('to')).toBe(0)
-    expect(getORPIndex('the')).toBe(0)
-    expect(getORPIndex('cat')).toBe(0)
-  })
-
-  it('should return 1 for 4-5 letter words', () => {
+  it('should return 1 for 2-5 letter words', () => {
+    expect(getORPIndex('to')).toBe(1)
+    expect(getORPIndex('the')).toBe(1)
+    expect(getORPIndex('cat')).toBe(1)
     expect(getORPIndex('word')).toBe(1)
     expect(getORPIndex('hello')).toBe(1)
   })
@@ -69,9 +66,15 @@ describe('getORPIndex', () => {
     expect(getORPIndex('beautiful')).toBe(2)
   })
 
-  it('should return 3 for 10+ letter words', () => {
+  it('should return 3 for 10-13 letter words', () => {
     expect(getORPIndex('interesting')).toBe(3)
+    expect(getORPIndex('DEDICATORIA')).toBe(3)
     expect(getORPIndex('presentation')).toBe(3)
+  })
+
+  it('should return 4 for 14+ letter words', () => {
+    expect(getORPIndex('internationally')).toBe(4)
+    expect(getORPIndex('supercalifragilisticexpialidocious')).toBe(4)
   })
 
   it('should ignore non-letter characters when counting', () => {
@@ -105,25 +108,25 @@ describe('getORPIndex', () => {
   })
 
   it('should handle Cyrillic (Russian)', () => {
-    expect(getORPIndex('мир')).toBe(0)       // 3 letters
+    expect(getORPIndex('мир')).toBe(1)       // 3 letters
     expect(getORPIndex('слово')).toBe(1)     // 5 letters
     expect(getORPIndex('привет')).toBe(2)    // 6 letters
   })
 
   it('should handle Greek', () => {
-    expect(getORPIndex('και')).toBe(0)       // 3 letters
+    expect(getORPIndex('και')).toBe(1)       // 3 letters
     expect(getORPIndex('λόγος')).toBe(1)     // 5 letters
     expect(getORPIndex('ελληνικά')).toBe(2)  // 8 letters
   })
 
   it('should handle Chinese characters', () => {
     expect(getORPIndex('中')).toBe(0)        // 1 character
-    expect(getORPIndex('中国')).toBe(0)      // 2 characters
+    expect(getORPIndex('中国')).toBe(1)      // 2 characters
     expect(getORPIndex('你好世界')).toBe(1)   // 4 characters
   })
 
   it('should handle Japanese', () => {
-    expect(getORPIndex('日本')).toBe(0)      // 2 characters
+    expect(getORPIndex('日本')).toBe(1)      // 2 characters
     expect(getORPIndex('こんにちは')).toBe(1) // 5 characters
   })
 
@@ -141,7 +144,7 @@ describe('getORPIndex', () => {
 describe('getActualORPIndex', () => {
   it('should return correct index for simple words', () => {
     expect(getActualORPIndex('hello')).toBe(1)
-    expect(getActualORPIndex('cat')).toBe(0)
+    expect(getActualORPIndex('cat')).toBe(1)
   })
 
   it('should skip leading punctuation', () => {
@@ -173,11 +176,11 @@ describe('getActualORPIndex', () => {
 
   it('should handle Cyrillic words', () => {
     expect(getActualORPIndex('привет')).toBe(2)    // 'и' is ORP
-    expect(getActualORPIndex('мир')).toBe(0)       // 'м' is ORP
+    expect(getActualORPIndex('мир')).toBe(1)       // 'и' is ORP
   })
 
   it('should handle CJK characters', () => {
-    expect(getActualORPIndex('你好')).toBe(0)       // First character
+    expect(getActualORPIndex('你好')).toBe(1)       // Second character is ORP
     expect(getActualORPIndex('你好世界')).toBe(1)   // Second character is ORP
   })
 })
@@ -286,9 +289,9 @@ describe('splitWordForDisplay', () => {
   })
 
   it('should handle short words', () => {
-    // 'cat' has ORP at index 0 (letter 'c')
+    // 'cat' has ORP at index 1 (letter 'a')
     const result = splitWordForDisplay('cat')
-    expect(result).toEqual({ before: '', orp: 'c', after: 'at' })
+    expect(result).toEqual({ before: 'c', orp: 'a', after: 't' })
   })
 
   it('should handle single letter words', () => {

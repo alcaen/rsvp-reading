@@ -147,7 +147,7 @@
       class="font-preview"
       style="font-family: {fontFamily}; font-size: {Math.min(fontSizeRem, 2.5)}rem; font-weight: {fontBold ? 700 : 500};"
     >
-      <span>Rea</span><span class="preview-orp">d</span><span>ing</span>
+      <span>Re</span><span class="preview-orp">a</span><span>ding</span>
     </div>
   </section>
 
