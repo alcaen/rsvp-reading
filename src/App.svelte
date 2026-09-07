@@ -128,6 +128,12 @@
       clearTimeout(intervalId);
       intervalId = null;
     }
+    saveCurrentSession();
+  }
+
+  function saveIfLeaving() {
+    if (document.visibilityState && document.visibilityState !== 'hidden') return;
+    saveCurrentSession();
   }
 
   function resume() {
@@ -347,6 +353,10 @@
   onMount(() => {
     parseText();
     window.addEventListener('keydown', handleKeydown);
+    document.addEventListener('visibilitychange', saveIfLeaving);
+    window.addEventListener('pagehide', saveCurrentSession);
+    window.addEventListener('beforeunload', saveCurrentSession);
+    document.addEventListener('freeze', saveCurrentSession);
 
     // Check for saved session
     if (hasSession()) {
@@ -361,6 +371,10 @@
     if (intervalId) clearTimeout(intervalId);
     if (fadeTimeoutId) clearTimeout(fadeTimeoutId);
     window.removeEventListener('keydown', handleKeydown);
+    document.removeEventListener('visibilitychange', saveIfLeaving);
+    window.removeEventListener('pagehide', saveCurrentSession);
+    window.removeEventListener('beforeunload', saveCurrentSession);
+    document.removeEventListener('freeze', saveCurrentSession);
   });
 </script>
 
