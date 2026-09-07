@@ -240,3 +240,19 @@ export function computeFitScale(
   if (neededHalf <= availableHalf) return 1;
   return Math.max(minScale, availableHalf / neededHalf);
 }
+
+/**
+ * Scale a centered word so its full width fits the display.
+ *
+ * @param {number} contentWidth - Measured width of the whole word
+ * @param {number} containerWidth - Available display width
+ * @param {number} [paddingRatio=0.08]
+ * @param {number} [minScale=0.08]
+ * @returns {number} Scale factor between minScale and 1
+ */
+export function computeWordFitScale(contentWidth, containerWidth, paddingRatio = 0.08, minScale = 0.08) {
+  if (!contentWidth || contentWidth <= 0 || !containerWidth || containerWidth <= 0) return 1;
+  const available = containerWidth * (1 - paddingRatio);
+  if (contentWidth <= available) return 1;
+  return Math.max(minScale, available / contentWidth);
+}

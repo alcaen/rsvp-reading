@@ -1,6 +1,6 @@
 <script>
   import { onMount, tick } from 'svelte';
-  import { getActualORPIndex, computeFitScale, DEFAULT_FONT_FAMILY, DEFAULT_FONT_SIZE_REM } from '../rsvp-utils.js';
+  import { getActualORPIndex, computeWordFitScale, DEFAULT_FONT_FAMILY, DEFAULT_FONT_SIZE_REM } from '../rsvp-utils.js';
 
   export let word = '';
   export let wordGroup = [];
@@ -35,21 +35,14 @@
   $: wordWeight = fontBold ? 700 : 500;
 
   let displayEl;
-  let beforeMeasureEl;
-  let orpMeasureEl;
-  let afterMeasureEl;
+  let measureEl;
   let fitScale = 1;
   $: displaySize = baseFontSize * fitScale;
 
   async function updateFit() {
     await tick();
     if (!displayEl) return;
-    fitScale = computeFitScale(
-      beforeMeasureEl?.offsetWidth ?? 0,
-      orpMeasureEl?.offsetWidth ?? 0,
-      afterMeasureEl?.offsetWidth ?? 0,
-      displayEl.clientWidth
-    );
+    fitScale = computeWordFitScale(measureEl?.offsetWidth ?? 0, displayEl.clientWidth);
   }
 
   $: currentWord, fontFamily, baseFontSize, wordWeight, useMultiMode, isRtl, updateFit();
@@ -72,23 +65,14 @@
     <div
       class="measure"
       aria-hidden="true"
+      bind:this={measureEl}
       style="font-family: {fontFamily}; font-size: {baseFontSize}rem; font-weight: {wordWeight};"
     >
-      <span bind:this={beforeMeasureEl}>
-        {#if isRtl}
-          {wordSuffix}{#if useMultiMode && wordsAfter.length > 0} {wordsAfter.join(' ')}{/if}
-        {:else}
-          {#if useMultiMode && wordsBefore.length > 0}{wordsBefore.join(' ')} {/if}{wordPrefix}
-        {/if}
-      </span>
-      <span bind:this={orpMeasureEl}>{focusChar}</span>
-      <span bind:this={afterMeasureEl}>
-        {#if isRtl}
-          {#if useMultiMode && wordsBefore.length > 0}{wordsBefore.join(' ')} {/if}{wordPrefix}
-        {:else}
-          {wordSuffix}{#if useMultiMode && wordsAfter.length > 0} {wordsAfter.join(' ')}{/if}
-        {/if}
-      </span>
+      {#if isRtl}
+        {#if useMultiMode && wordsAfter.length > 0}{wordsAfter.join(' ')} {/if}{wordSuffix}{focusChar}{wordPrefix}{#if useMultiMode && wordsBefore.length > 0} {wordsBefore.join(' ')}{/if}
+      {:else}
+        {#if useMultiMode && wordsBefore.length > 0}{wordsBefore.join(' ')} {/if}{wordPrefix}{focusChar}{wordSuffix}{#if useMultiMode && wordsAfter.length > 0} {wordsAfter.join(' ')}{/if}
+      {/if}
     </div>
   {/if}
 
@@ -105,31 +89,26 @@
     "
   >
     {#if currentWord}
-      <!-- ORP letter always in the center column -->
-      <span class="orp">{focusChar}</span>
-
-      <!-- Content before ORP: prefix of current word + words before -->
-      <span class="before-orp" style="direction: {isRtl ? 'rtl' : 'ltr'}">
+      <span class="word" style="direction: {isRtl ? 'rtl' : 'ltr'}">
         {#if isRtl}
-          {wordSuffix}{#if useMultiMode && wordsAfter.length > 0}
-            &nbsp;<span class="context-words">{wordsAfter.join(' ')}</span>
+          {#if useMultiMode && wordsAfter.length > 0}
+            <span class="context-words">{wordsAfter.join(' ')}</span>
+          {/if}
+          <span class="after-orp">{wordSuffix}</span>
+          <span class="orp">{focusChar}</span>
+          <span class="before-orp">{wordPrefix}</span>
+          {#if useMultiMode && wordsBefore.length > 0}
+            <span class="context-words">{wordsBefore.join(' ')}</span>
           {/if}
         {:else}
           {#if useMultiMode && wordsBefore.length > 0}
-            <span class="context-words">{wordsBefore.join(' ')}</span>&nbsp;
-          {/if}{wordPrefix}
-        {/if}
-      </span>
-
-      <!-- Content after ORP: suffix of current word + words after -->
-      <span class="after-orp" style="direction: {isRtl ? 'rtl' : 'ltr'}">
-        {#if isRtl}
-          {#if useMultiMode && wordsBefore.length > 0}
-            <span class="context-words">{wordsBefore.join(' ')}</span>&nbsp;
-          {/if}{wordPrefix}
-        {:else}
-          {wordSuffix}{#if useMultiMode && wordsAfter.length > 0}
-            &nbsp;<span class="context-words">{wordsAfter.join(' ')}</span>
+            <span class="context-words">{wordsBefore.join(' ')}</span>
+          {/if}
+          <span class="before-orp">{wordPrefix}</span>
+          <span class="orp">{focusChar}</span>
+          <span class="after-orp">{wordSuffix}</span>
+          {#if useMultiMode && wordsAfter.length > 0}
+            <span class="context-words">{wordsAfter.join(' ')}</span>
           {/if}
         {/if}
       </span>
@@ -191,15 +170,21 @@
 
   .word-container {
     position: relative;
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    display: flex;
     align-items: center;
+    justify-content: center;
     width: 100%;
     line-height: 1;
-    white-space: nowrap;
     text-rendering: geometricPrecision;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+  }
+
+  .word {
+    display: flex;
+    align-items: baseline;
+    white-space: nowrap;
+    color: #fff;
   }
 
   .context-words {
@@ -207,41 +192,25 @@
     font-weight: 400;
   }
 
+  .context-words + .before-orp,
+  .before-orp + .context-words,
+  .after-orp + .context-words,
+  .context-words + .after-orp {
+    margin-inline-start: 0.35em;
+  }
+
   .orp {
-    grid-column: 2;
-    grid-row: 1;
     color: #ff4444;
     font-weight: 700;
     text-shadow: 0 0 30px rgba(255, 68, 68, 0.6);
     z-index: 2;
-    justify-self: center;
   }
 
   .word-container.bold .orp {
     font-weight: 800;
   }
 
-  .before-orp {
-    grid-column: 1;
-    grid-row: 1;
-    justify-self: end;
-    color: #fff;
-    text-align: right;
-    min-width: 0;
-  }
-
-  .after-orp {
-    grid-column: 3;
-    grid-row: 1;
-    justify-self: start;
-    color: #fff;
-    text-align: left;
-    min-width: 0;
-  }
-
   .placeholder {
-    grid-column: 1 / -1;
-    justify-self: center;
     color: #333;
     font-size: 2rem;
     font-weight: 300;

@@ -8,7 +8,8 @@ import {
   splitWordForDisplay,
   shouldPauseAtWord,
   extractWordFrame,
-  computeFitScale
+  computeFitScale,
+  computeWordFitScale
 } from '../lib/rsvp-utils.js'
 
 describe('parseText', () => {
@@ -412,5 +413,24 @@ describe('computeFitScale', () => {
   it('should return 1 for invalid measurements', () => {
     expect(computeFitScale(0, 0, 0, 200)).toBe(1)
     expect(computeFitScale(40, 20, 40, 0)).toBe(1)
+  })
+})
+
+describe('computeWordFitScale', () => {
+  it('should return 1 when the word already fits', () => {
+    expect(computeWordFitScale(200, 400)).toBe(1)
+  })
+
+  it('should shrink a long word to the padded width', () => {
+    expect(computeWordFitScale(400, 200, 0.1)).toBeCloseTo(0.45)
+  })
+
+  it('should not shrink below the minimum scale', () => {
+    expect(computeWordFitScale(10000, 100, 0.08, 0.08)).toBe(0.08)
+  })
+
+  it('should return 1 for invalid measurements', () => {
+    expect(computeWordFitScale(0, 200)).toBe(1)
+    expect(computeWordFitScale(200, 0)).toBe(1)
   })
 })
